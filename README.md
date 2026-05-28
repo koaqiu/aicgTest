@@ -248,6 +248,28 @@ docker run --rm -p 8000:8000 \
 - Dockerfile 默认设置 `WEB_PUBLIC=1`，容器内会监听 `0.0.0.0`
 - 建议在生产中通过 Nginx 反向代理到该服务
 
+### 按网络区域切换构建源（Compose）
+
+`deploy/docker-compose.web.example.yml` 已支持通过环境变量注入构建参数。
+
+使用全球默认源：
+
+```bash
+docker compose --env-file deploy/.env.web.global.example -f deploy/docker-compose.web.example.yml build
+```
+
+使用中国镜像源：
+
+```bash
+docker compose --env-file deploy/.env.web.cn.example -f deploy/docker-compose.web.example.yml build
+```
+
+构建并启动：
+
+```bash
+docker compose --env-file deploy/.env.web.cn.example -f deploy/docker-compose.web.example.yml up -d --build
+```
+
 ## 优雅退出
 
 Web 服务在停止时会执行：

@@ -2,7 +2,15 @@ version: "3.9"
 
 services:
   ai-detector-web:
-    image: ai-detector-web:latest
+    image: ${IMAGE_NAME:-ai-detector-web:latest}
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      args:
+        APT_MIRROR: ${APT_MIRROR:-http://deb.debian.org/debian}
+        APT_SECURITY_MIRROR: ${APT_SECURITY_MIRROR:-http://security.debian.org/debian-security}
+        PIP_INDEX_URL: ${PIP_INDEX_URL:-https://pypi.org/simple}
+        PIP_TRUSTED_HOST: ${PIP_TRUSTED_HOST:-}
     container_name: ai-detector-web
     restart: unless-stopped
     environment:
