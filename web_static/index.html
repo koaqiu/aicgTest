@@ -1,0 +1,902 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI 图片在线检测</title>
+    <style>
+        :root {
+            --bg: #f3f6fb;
+            --paper: #f8fafc;
+            --line: #c8d3e1;
+            --text: #18304c;
+            --muted: #5f748d;
+            --brand: #145d87;
+            --pending-bg: #e9eff6;
+            --pending-text: #4e637b;
+            --real-bg: #e8f8ee;
+            --real-text: #0f7a3f;
+            --ai-bg: #fdecea;
+            --ai-text: #b42318;
+            --sus-bg: #fff4dd;
+            --sus-text: #9a6700;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 8% -4%, #ffffff 0%, transparent 30%),
+                radial-gradient(circle at 120% 10%, #e8f1ff 0%, transparent 26%),
+                var(--bg);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1380px;
+            margin: 14px auto;
+            padding: 0 12px 14px;
+        }
+        .panel {
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            background: var(--paper);
+            box-shadow: 0 18px 34px rgba(17, 36, 58, 0.06);
+        }
+        .hidden { display: none !important; }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .title {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: 0.3px;
+        }
+        .sub {
+            color: var(--muted);
+            font-size: 14px;
+            margin-top: 3px;
+        }
+        .tool-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .lang-switch {
+            display: inline-flex;
+            border: 1px solid #9fb9d2;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .lang-btn {
+            border: none;
+            border-right: 1px solid #d3e0ec;
+            background: #fff;
+            color: var(--brand);
+            padding: 8px 12px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .lang-btn:last-child { border-right: none; }
+        .lang-btn.active {
+            background: var(--brand);
+            color: #fff;
+        }
+        .btn-secondary {
+            background: #ffffff;
+            color: var(--brand);
+            border: 1px solid #9fb9d2;
+            font-weight: 600;
+        }
+        select, button {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            font-size: 15px;
+            padding: 10px 14px;
+            background: #fff;
+            color: var(--text);
+        }
+        button {
+            background: var(--brand);
+            color: #fff;
+            border-color: var(--brand);
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .upload-view { padding: 26px 20px 22px; }
+        .dropzone {
+            border: 1px solid #b8c9dc;
+            border-radius: 18px;
+            min-height: 340px;
+            padding: 26px 18px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 14px;
+            text-align: center;
+            background: #f7f9fd;
+            transition: all 0.2s ease;
+        }
+        .dropzone.dragover {
+            border-color: #79a7cf;
+            background: #eef5ff;
+            transform: translateY(-1px);
+        }
+        .upload-icon {
+            width: 68px;
+            height: 68px;
+            border: 2px solid #5b87ad;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            color: #2f648f;
+            font-size: 32px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .drop-title {
+            font-size: 40px;
+            margin-top: 4px;
+            font-weight: 700;
+            letter-spacing: 0.4px;
+        }
+        .drop-sub {
+            max-width: 900px;
+            color: #54718e;
+            font-size: 20px;
+            line-height: 1.45;
+        }
+        .example-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 6px;
+        }
+        .tag {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 6px 15px;
+            font-size: 13px;
+            border: 1px solid #d4e0ee;
+            color: #386287;
+            background: #edf4fb;
+        }
+        #file {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .result-view { padding: 18px; }
+        .result-grid {
+            display: grid;
+            grid-template-columns: 1.45fr 1fr;
+            gap: 18px;
+            align-items: stretch;
+        }
+        .image-wrap {
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            overflow: hidden;
+            height: clamp(280px, 58vh, 560px);
+            background: #d9e2eb;
+        }
+        #previewImage {
+            width: 100%;
+            height: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            display: block;
+            background: #d9e2eb;
+        }
+        .result-right {
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            gap: 12px;
+        }
+        .summary {
+            border: 1px solid #b4e5c6;
+            border-radius: 14px;
+            background: #dff5e8;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            font-size: 17px;
+        }
+        .summary-pill {
+            border-radius: 999px;
+            padding: 8px 14px;
+            font-size: 20px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .status-badge {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 5px 12px;
+            font-size: 12px;
+            background: #dde9f6;
+            color: #34516d;
+            border: 1px solid #c2d4e8;
+            width: fit-content;
+        }
+        .task-id {
+            color: #6c8298;
+            font-size: 12px;
+            overflow-wrap: anywhere;
+        }
+        .metrics {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #f6f8fb;
+            padding: 10px 14px;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 22px;
+            padding: 18px 0;
+            border-bottom: 1px solid #d2dbe6;
+        }
+        .metric:last-child { border-bottom: none; }
+        .metric .value { font-weight: 700; }
+        .log {
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #0d2238;
+            color: #dce9ff;
+            padding: 10px;
+            font-size: 12px;
+            overflow: auto;
+            max-height: 190px;
+        }
+
+        .btn-primary {
+            width: 100%;
+            font-size: 36px;
+            padding: 18px;
+            border-radius: 14px;
+            letter-spacing: 0.3px;
+        }
+
+        #captchaWrap {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-top: 4px;
+        }
+        #captcha { min-height: 66px; }
+
+        .text-real { color: var(--real-text); }
+        .text-ai { color: var(--ai-text); }
+        .text-sus { color: var(--sus-text); }
+        .text-pending { color: var(--pending-text); }
+
+        @media (max-width: 1100px) {
+            .result-grid { grid-template-columns: 1fr; }
+            #previewImage, .image-wrap { height: clamp(240px, 44vh, 380px); }
+            .drop-title { font-size: 30px; }
+            .drop-sub { font-size: 16px; }
+            .btn-primary { font-size: 24px; }
+            .metric { font-size: 18px; }
+        }
+    </style>
+</head>
+<body>
+    <main class="container">
+        <div class="toolbar">
+            <div>
+                <h1 id="title" class="title">AI 图片在线检测</h1>
+                <div id="subtitle" class="sub">匿名试用 · 上传后自动排队检测 · 重复文件秒级命中缓存</div>
+            </div>
+            <div class="tool-row">
+                <div class="lang-switch">
+                    <button id="langZh" class="lang-btn" type="button">中</button>
+                    <button id="langEn" class="lang-btn" type="button">EN</button>
+                </div>
+                <select id="device">
+                    <option value="auto" selected>Device: auto</option>
+                    <option value="gpu">Device: gpu</option>
+                    <option value="cpu">Device: cpu</option>
+                </select>
+                <button id="toolbarRetryBtn" class="btn-secondary hidden" type="button">重新上传</button>
+            </div>
+        </div>
+
+        <input id="file" type="file" accept="image/*" />
+
+        <section id="uploadView" class="panel upload-view">
+            <div id="dropzone" class="dropzone" role="button" tabindex="0" aria-label="Upload image area">
+                <div class="upload-icon">+</div>
+                <div id="dropTitle" class="drop-title">Drag & Drop or Click to Upload an Image</div>
+                <div id="dropSub" class="drop-sub">上传后会进入检测队列。若系统检测到高风险流量，将要求先完成验证码。</div>
+                <button id="uploadBtn" type="button">Upload File</button>
+                <div class="example-tags">
+                    <span class="tag">DALL-E</span>
+                    <span class="tag">Midjourney</span>
+                    <span class="tag">Ideogram</span>
+                    <span class="tag">Nano Banana</span>
+                </div>
+                <div id="captchaWrap" class="hidden"><div id="captcha"></div></div>
+            </div>
+        </section>
+
+        <section id="resultView" class="panel result-view hidden">
+            <div class="result-grid">
+                <div class="image-wrap">
+                    <img id="previewImage" alt="preview" />
+                </div>
+
+                <div class="result-right">
+                    <div id="summary" class="summary">
+                        <div id="summaryText">This image is likely real</div>
+                        <div id="summaryPill" class="summary-pill text-real">84% REAL</div>
+                    </div>
+
+                    <div id="statusBadge" class="status-badge">等待上传</div>
+                    <div id="taskId" class="task-id"></div>
+
+                    <div class="metrics">
+                        <div class="metric"><span id="metricAiLabel">AI Likelihood</span><span id="aiLikelihood" class="value text-real">0%</span></div>
+                        <div class="metric"><span id="metricConfLabel">Confidence</span><span id="confidenceLevel" class="value">Low</span></div>
+                        <div class="metric"><span id="metricClsLabel">Classification</span><span id="classification" class="value text-real">Real</span></div>
+                    </div>
+
+                    <button id="retryBtn" class="btn-primary" type="button">Try Another Image</button>
+                </div>
+            </div>
+
+            <pre id="output" class="log">{\n  "message": "ready"\n}</pre>
+        </section>
+    </main>
+
+    <script>
+        const I18N = {
+            zh: {
+                pageTitle: "AI 图片在线检测",
+                subtitle: "匿名试用 · 上传后自动排队检测 · 重复文件秒级命中缓存",
+                toolbarRetry: "重新上传",
+                dropTitle: "拖拽图片到这里，或点击上传",
+                dropSub: "上传后会进入检测队列。若系统检测到高风险流量，将要求先完成验证码。",
+                uploadBtn: "上传文件",
+                retryBtn: "再次上传",
+                waitingUpload: "等待上传",
+                chooseImageFirst: "请先选择图片",
+                chooseImageFile: "请选择图片文件",
+                selectedFile: "已选择",
+                uploading: "上传中...",
+                requestError: "请求异常",
+                submitFailed: "提交失败",
+                queryFailed: "查询失败",
+                detectFailed: "检测失败",
+                queuedWaiting: "已入队，等待处理...",
+                taskState: "任务状态",
+                done: "完成",
+                doneCached: "完成（缓存命中）",
+                needCaptchaNow: "当前流量较高，请先完成验证码",
+                needCaptchaRetry: "请完成验证码后再次提交",
+                captchaInitFailed: "验证码初始化失败",
+                captchaLoadFailed: "验证码加载失败",
+                metricAiLabel: "AI 可能性",
+                metricConfLabel: "可信度",
+                metricClsLabel: "分类",
+                classReal: "真实",
+                classAi: "AI",
+                classSuspect: "疑似",
+                confLow: "低",
+                confMedium: "中",
+                confHigh: "高",
+                summaryReal: "这张图片更可能是真实拍摄",
+                summaryAi: "这张图片更可能是 AI 生成",
+                summarySus: "这张图片疑似 AI 生成",
+                summaryPending: "正在分析这张图片...",
+                summaryRealPill: "{p}% 真实",
+                summaryAiPill: "{p}% AI",
+                summarySusPill: "{p}% 疑似",
+                summaryPendingPill: "检测中",
+                classPending: "待定",
+                detecting: "正在检测..."
+            },
+            en: {
+                pageTitle: "AI Image Detector",
+                subtitle: "Anonymous trial · Queued detection · Instant cache hit for duplicate uploads",
+                toolbarRetry: "Upload Again",
+                dropTitle: "Drag & Drop or Click to Upload an Image",
+                dropSub: "Your image enters the queue after upload. If high-risk traffic is detected, captcha verification may be required.",
+                uploadBtn: "Upload File",
+                retryBtn: "Try Another Image",
+                waitingUpload: "Waiting for upload",
+                chooseImageFirst: "Please choose an image first",
+                chooseImageFile: "Please choose an image file",
+                selectedFile: "Selected",
+                uploading: "Uploading...",
+                requestError: "Request error",
+                submitFailed: "Submit failed",
+                queryFailed: "Query failed",
+                detectFailed: "Detection failed",
+                queuedWaiting: "Queued, waiting for processing...",
+                taskState: "Task",
+                done: "Done",
+                doneCached: "Done (Cache hit)",
+                needCaptchaNow: "High traffic detected. Please complete captcha first",
+                needCaptchaRetry: "Please complete captcha and submit again",
+                captchaInitFailed: "Captcha initialization failed",
+                captchaLoadFailed: "Captcha loading failed",
+                metricAiLabel: "AI Likelihood",
+                metricConfLabel: "Confidence",
+                metricClsLabel: "Classification",
+                classReal: "Real",
+                classAi: "AI",
+                classSuspect: "Suspect",
+                confLow: "Low",
+                confMedium: "Medium",
+                confHigh: "High",
+                summaryReal: "This image is likely real",
+                summaryAi: "This image is likely AI-generated",
+                summarySus: "This image may be AI-generated",
+                summaryPending: "Analyzing this image...",
+                summaryRealPill: "{p}% REAL",
+                summaryAiPill: "{p}% AI",
+                summarySusPill: "{p}% SUSPECT",
+                summaryPendingPill: "ANALYZING",
+                classPending: "Pending",
+                detecting: "Detecting..."
+            }
+        };
+
+        const fileInput = document.getElementById("file");
+        const uploadBtn = document.getElementById("uploadBtn");
+        const dropzone = document.getElementById("dropzone");
+        const retryBtn = document.getElementById("retryBtn");
+        const uploadView = document.getElementById("uploadView");
+        const resultView = document.getElementById("resultView");
+        const previewImage = document.getElementById("previewImage");
+        const toolbarRetryBtn = document.getElementById("toolbarRetryBtn");
+        const deviceEl = document.getElementById("device");
+        const outputEl = document.getElementById("output");
+        const taskIdEl = document.getElementById("taskId");
+        const statusBadgeEl = document.getElementById("statusBadge");
+        const summaryEl = document.getElementById("summary");
+        const summaryTextEl = document.getElementById("summaryText");
+        const summaryPillEl = document.getElementById("summaryPill");
+        const aiLikelihoodEl = document.getElementById("aiLikelihood");
+        const confidenceLevelEl = document.getElementById("confidenceLevel");
+        const classificationEl = document.getElementById("classification");
+        const captchaWrap = document.getElementById("captchaWrap");
+        const captchaEl = document.getElementById("captcha");
+
+        const langZhBtn = document.getElementById("langZh");
+        const langEnBtn = document.getElementById("langEn");
+
+        let lang = (navigator.language || "").toLowerCase().startsWith("zh") ? "zh" : "en";
+        let currentFile = null;
+        let turnstileEnabled = false;
+        let turnstileToken = "";
+        let turnstileWidgetId = null;
+        let turnstileSiteKey = "";
+        let turnstileScriptLoaded = false;
+        let currentViewState = "idle";
+        let lastResult = null;
+
+        const APP_BASE_PATH = (() => {
+            const path = window.location.pathname || "/";
+            const legacySuffix = "/static/index.html";
+            if (path.endsWith(legacySuffix)) {
+                const base = path.slice(0, -legacySuffix.length).replace(/\/+$/, "");
+                return base === "/" ? "" : base;
+            }
+
+            if (path === "/" || path === "") return "";
+
+            const trimmed = path.replace(/\/+$/, "");
+            if (!trimmed || trimmed === "/") return "";
+
+            if (trimmed.endsWith(".html")) {
+                const idx = trimmed.lastIndexOf("/");
+                const parent = idx > 0 ? trimmed.slice(0, idx) : "";
+                return parent === "/" ? "" : parent;
+            }
+
+            return trimmed;
+        })();
+
+        function withBase(path) {
+            const fixed = path.startsWith("/") ? path : `/${path}`;
+            return `${APP_BASE_PATH}${fixed}`;
+        }
+
+        function t(key) {
+            return (I18N[lang] && I18N[lang][key]) || I18N.en[key] || key;
+        }
+
+        function refreshLanguageUI() {
+            document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+            document.title = t("pageTitle");
+            document.getElementById("title").textContent = t("pageTitle");
+            document.getElementById("subtitle").textContent = t("subtitle");
+            document.getElementById("dropTitle").textContent = t("dropTitle");
+            document.getElementById("dropSub").textContent = t("dropSub");
+            uploadBtn.textContent = t("uploadBtn");
+            retryBtn.textContent = t("retryBtn");
+            toolbarRetryBtn.textContent = t("toolbarRetry");
+            document.getElementById("metricAiLabel").textContent = t("metricAiLabel");
+            document.getElementById("metricConfLabel").textContent = t("metricConfLabel");
+            document.getElementById("metricClsLabel").textContent = t("metricClsLabel");
+
+            langZhBtn.classList.toggle("active", lang === "zh");
+            langEnBtn.classList.toggle("active", lang === "en");
+
+            if (statusBadgeEl.textContent.trim() === "" || statusBadgeEl.textContent === I18N.en.waitingUpload || statusBadgeEl.textContent === I18N.zh.waitingUpload) {
+                setStatus(t("waitingUpload"), false);
+            }
+
+            if (currentViewState === "pending") {
+                applyPendingVisual();
+            } else if (currentViewState === "result" && lastResult) {
+                applyResultVisual(lastResult);
+            }
+        }
+
+        function setOutput(data) {
+            outputEl.textContent = JSON.stringify(data, null, 2);
+        }
+
+        function setStatus(text, isError = false) {
+            statusBadgeEl.textContent = text;
+            statusBadgeEl.style.background = isError ? "#fdecea" : "#dde9f6";
+            statusBadgeEl.style.borderColor = isError ? "#f6c4bc" : "#c2d4e8";
+            statusBadgeEl.style.color = isError ? "#9f1f12" : "#34516d";
+        }
+
+        function confidenceLevel(aiPct) {
+            if (aiPct >= 70) return t("confHigh");
+            if (aiPct >= 40) return t("confMedium");
+            return t("confLow");
+        }
+
+        function classifyLabel(rawLabel) {
+            const label = String(rawLabel || "");
+            if (label.includes("疑似") || /suspect/i.test(label)) return "suspect";
+            if (label.includes("AI生成") || /AI/i.test(label)) return "ai";
+            return "real";
+        }
+
+        function applyResultVisual(result) {
+            currentViewState = "result";
+            lastResult = result;
+            const cls = classifyLabel(result.label);
+            const aiPct = Math.max(0, Math.min(100, Math.round((result.confidence || 0) * 100)));
+            const realPct = 100 - aiPct;
+
+            aiLikelihoodEl.textContent = `${aiPct}%`;
+            confidenceLevelEl.textContent = confidenceLevel(aiPct);
+
+            if (cls === "real") {
+                summaryEl.style.background = "var(--real-bg)";
+                summaryEl.style.borderColor = "#b7e6c8";
+                summaryTextEl.textContent = t("summaryReal");
+                summaryPillEl.textContent = t("summaryRealPill").replace("{p}", String(realPct));
+                summaryPillEl.className = "summary-pill text-real";
+                classificationEl.textContent = t("classReal");
+                classificationEl.className = "value text-real";
+                aiLikelihoodEl.className = "value text-real";
+            } else if (cls === "suspect") {
+                summaryEl.style.background = "var(--sus-bg)";
+                summaryEl.style.borderColor = "#f4d8a6";
+                summaryTextEl.textContent = t("summarySus");
+                summaryPillEl.textContent = t("summarySusPill").replace("{p}", String(aiPct));
+                summaryPillEl.className = "summary-pill text-sus";
+                classificationEl.textContent = t("classSuspect");
+                classificationEl.className = "value text-sus";
+                aiLikelihoodEl.className = "value text-sus";
+            } else {
+                summaryEl.style.background = "var(--ai-bg)";
+                summaryEl.style.borderColor = "#f8cec8";
+                summaryTextEl.textContent = t("summaryAi");
+                summaryPillEl.textContent = t("summaryAiPill").replace("{p}", String(aiPct));
+                summaryPillEl.className = "summary-pill text-ai";
+                classificationEl.textContent = t("classAi");
+                classificationEl.className = "value text-ai";
+                aiLikelihoodEl.className = "value text-ai";
+            }
+        }
+
+        function applyPendingVisual() {
+            currentViewState = "pending";
+            summaryEl.style.background = "var(--pending-bg)";
+            summaryEl.style.borderColor = "#cad8e8";
+            summaryTextEl.textContent = t("summaryPending");
+            summaryPillEl.textContent = t("summaryPendingPill");
+            summaryPillEl.className = "summary-pill text-pending";
+            aiLikelihoodEl.textContent = "--";
+            aiLikelihoodEl.className = "value text-pending";
+            confidenceLevelEl.textContent = "--";
+            classificationEl.textContent = t("classPending");
+            classificationEl.className = "value text-pending";
+        }
+
+        function showUploadView() {
+            uploadView.classList.remove("hidden");
+            resultView.classList.add("hidden");
+            toolbarRetryBtn.classList.add("hidden");
+            currentViewState = "idle";
+            lastResult = null;
+            setStatus(t("waitingUpload"), false);
+            taskIdEl.textContent = "";
+            setOutput({ message: "ready" });
+            currentFile = null;
+            fileInput.value = "";
+        }
+
+        function showResultView(file) {
+            uploadView.classList.add("hidden");
+            resultView.classList.remove("hidden");
+            toolbarRetryBtn.classList.remove("hidden");
+            previewImage.src = URL.createObjectURL(file);
+            applyPendingVisual();
+            setStatus(t("detecting"));
+        }
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const s = document.createElement("script");
+                s.src = src;
+                s.async = true;
+                s.defer = true;
+                s.onload = () => resolve();
+                s.onerror = () => reject(new Error("script_load_failed"));
+                document.head.appendChild(s);
+            });
+        }
+
+        async function ensureCaptchaReady() {
+            if (!turnstileEnabled || turnstileWidgetId !== null) {
+                captchaWrap.classList.remove("hidden");
+                return;
+            }
+            try {
+                captchaWrap.classList.remove("hidden");
+                if (!turnstileScriptLoaded) {
+                    await loadScript("https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit");
+                    turnstileScriptLoaded = true;
+                }
+                if (!window.turnstile || !turnstileSiteKey) {
+                    setStatus(t("captchaInitFailed"), true);
+                    return;
+                }
+
+                turnstileWidgetId = window.turnstile.render("#captcha", {
+                    sitekey: turnstileSiteKey,
+                    callback: (token) => {
+                        turnstileToken = token || "";
+                    },
+                    "expired-callback": () => {
+                        turnstileToken = "";
+                    },
+                    "error-callback": () => {
+                        turnstileToken = "";
+                    }
+                });
+            } catch (_) {
+                setStatus(t("captchaLoadFailed"), true);
+            }
+        }
+
+        async function initCaptchaConfig() {
+            try {
+                const r = await fetch(withBase("/api/config/public"));
+                if (!r.ok) return;
+                const cfg = await r.json();
+                turnstileEnabled = !!cfg.turnstile_enabled;
+                turnstileSiteKey = cfg.turnstile_site_key || "";
+                captchaWrap.classList.add("hidden");
+            } catch (_) {
+                // ignore
+            }
+        }
+
+        async function shouldRequireCaptcha() {
+            if (!turnstileEnabled) return false;
+            try {
+                const r = await fetch(withBase("/api/abuse/check"));
+                if (!r.ok) return true;
+                const data = await r.json();
+                return !!data.require_captcha;
+            } catch (_) {
+                return true;
+            }
+        }
+
+        async function poll(taskId) {
+            for (;;) {
+                const r = await fetch(withBase(`/api/tasks/${taskId}`));
+                if (!r.ok) {
+                    const err = await r.json().catch(() => ({ detail: t("queryFailed") }));
+                    setStatus(t("queryFailed"), true);
+                    setOutput(err);
+                    return;
+                }
+                const state = await r.json();
+                setStatus(`${t("taskState")}: ${state.status}`);
+                setOutput(state);
+
+                if (state.status === "done") {
+                    const rr = await fetch(withBase(`/api/tasks/${taskId}/result`));
+                    const res = await rr.json();
+                    setStatus(state.cached ? t("doneCached") : t("done"));
+                    setOutput(res);
+                    applyResultVisual(res.result || {});
+                    return;
+                }
+                if (state.status === "failed") {
+                    setStatus(t("detectFailed"), true);
+                    return;
+                }
+                await new Promise((resolve) => setTimeout(resolve, 1200));
+            }
+        }
+
+        async function submitCurrentFile() {
+            if (!currentFile) {
+                setStatus(t("chooseImageFirst"), true);
+                return;
+            }
+
+            uploadBtn.disabled = true;
+            setStatus(t("uploading"));
+            setOutput({ message: "uploading" });
+
+            try {
+                const requireCaptcha = await shouldRequireCaptcha();
+                if (requireCaptcha) {
+                    await ensureCaptchaReady();
+                    if (!turnstileToken) {
+                        setStatus(t("needCaptchaNow"), true);
+                        return;
+                    }
+                } else {
+                    captchaWrap.classList.add("hidden");
+                }
+
+                showResultView(currentFile);
+
+                const form = new FormData();
+                form.append("file", currentFile);
+                form.append("device", deviceEl.value.replace("Device: ", ""));
+                if (turnstileEnabled && turnstileToken) {
+                    form.append("captcha_token", turnstileToken);
+                }
+
+                const r = await fetch(withBase("/api/tasks"), { method: "POST", body: form });
+                const data = await r.json().catch(() => ({ detail: "invalid_json" }));
+                taskIdEl.textContent = data.task_id ? `task_id: ${data.task_id}` : "";
+
+                if (!r.ok) {
+                    if (r.status === 428 && turnstileEnabled) {
+                        await ensureCaptchaReady();
+                        setStatus(t("needCaptchaRetry"), true);
+                    } else {
+                        setStatus(t("submitFailed"), true);
+                    }
+                    setOutput(data);
+                    return;
+                }
+
+                setOutput(data);
+                if (data.status === "done") {
+                    setStatus(data.cached ? t("doneCached") : t("done"));
+                    applyResultVisual(data.result || {});
+                    return;
+                }
+
+                setStatus(t("queuedWaiting"));
+                await poll(data.task_id);
+            } catch (e) {
+                setStatus(t("requestError"), true);
+                setOutput({ error: String(e) });
+            } finally {
+                if (turnstileEnabled && window.turnstile && turnstileWidgetId !== null) {
+                    window.turnstile.reset(turnstileWidgetId);
+                    turnstileToken = "";
+                }
+                uploadBtn.disabled = false;
+            }
+        }
+
+        function onFileChosen(file) {
+            if (!file || !file.type.startsWith("image/")) {
+                setStatus(t("chooseImageFile"), true);
+                return;
+            }
+            currentFile = file;
+            setStatus(`${t("selectedFile")}: ${file.name}`);
+            submitCurrentFile();
+        }
+
+        function openFilePicker() {
+            fileInput.click();
+        }
+
+        uploadBtn.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            openFilePicker();
+        });
+
+        dropzone.addEventListener("click", (e) => {
+            if (e.target && e.target.closest("#uploadBtn")) return;
+            openFilePicker();
+        });
+        dropzone.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openFilePicker();
+            }
+        });
+
+        fileInput.addEventListener("change", () => {
+            onFileChosen(fileInput.files && fileInput.files[0]);
+        });
+
+        ["dragenter", "dragover"].forEach((evt) => {
+            dropzone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.add("dragover");
+            });
+        });
+        ["dragleave", "drop"].forEach((evt) => {
+            dropzone.addEventListener(evt, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropzone.classList.remove("dragover");
+            });
+        });
+        dropzone.addEventListener("drop", (e) => {
+            const dt = e.dataTransfer;
+            if (!dt || !dt.files || dt.files.length === 0) return;
+            onFileChosen(dt.files[0]);
+        });
+
+        function resetToUpload() {
+            if (previewImage.src) {
+                URL.revokeObjectURL(previewImage.src);
+                previewImage.removeAttribute("src");
+            }
+            showUploadView();
+        }
+
+        retryBtn.addEventListener("click", resetToUpload);
+        toolbarRetryBtn.addEventListener("click", resetToUpload);
+
+        langZhBtn.addEventListener("click", () => {
+            lang = "zh";
+            refreshLanguageUI();
+        });
+        langEnBtn.addEventListener("click", () => {
+            lang = "en";
+            refreshLanguageUI();
+        });
+
+        refreshLanguageUI();
+        initCaptchaConfig();
+        showUploadView();
+    </script>
+</body>
+</html>

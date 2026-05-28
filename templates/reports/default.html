@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI 检测汇总报告</title>
+    <style>
+        :root {
+            --bg: #f7f4ef;
+            --paper: #fffdf9;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --ai: #d9480f;
+            --suspect: #f59f00;
+            --real: #2b8a3e;
+            --line: #eadfce;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+            color: var(--text);
+            background:
+                radial-gradient(circle at 20% 0%, #fff8ef 0%, transparent 32%),
+                radial-gradient(circle at 90% 20%, #f3f9ff 0%, transparent 28%),
+                var(--bg);
+        }
+        .wrap { max-width: 1200px; margin: 24px auto; padding: 0 16px 28px; }
+        .panel {
+            background: var(--paper);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            margin-bottom: 16px;
+        }
+        h1 { margin: 0 0 8px; font-size: 28px; }
+        .sub { color: var(--muted); font-size: 14px; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-top: 12px; }
+        .stat { background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+        .k { font-size: 12px; color: var(--muted); }
+        .v { font-size: 24px; font-weight: 700; margin-top: 2px; }
+        .bar { margin-top: 12px; height: 14px; display: flex; border-radius: 999px; overflow: hidden; border: 1px solid var(--line); }
+        .bar > div { height: 100%; }
+        .bar .ai { background: var(--ai); width: $ai_pct%; }
+        .bar .suspect { background: var(--suspect); width: $suspect_pct%; }
+        .bar .real { background: var(--real); width: $real_pct%; }
+        .legend { display: flex; gap: 14px; margin-top: 8px; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+        .dot { width: 10px; height: 10px; display: inline-block; border-radius: 50%; margin-right: 6px; }
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+        .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+        .card img { width: 100%; height: 170px; object-fit: cover; display: block; background: #eee; }
+        .meta { padding: 10px; }
+        .name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tag { display: inline-block; font-size: 12px; margin-top: 6px; padding: 2px 8px; border-radius: 999px; color: #fff; }
+        .tag.ai { background: var(--ai); }
+        .tag.suspect { background: var(--suspect); }
+        .conf { margin-top: 6px; color: var(--muted); font-size: 12px; }
+        .tags { margin-top: 4px; color: var(--muted); font-size: 12px; line-height: 1.4; }
+        .empty { color: var(--muted); }
+    </style>
+</head>
+<body>
+    <main class="wrap">
+        <section class="panel">
+            <h1>AI 检测汇总报告</h1>
+            <div class="sub">目录: $target_dir</div>
+            <div class="sub">生成时间: $generated_at</div>
+            <div class="stats">
+                <div class="stat"><div class="k">总文件数</div><div class="v">$total</div></div>
+                <div class="stat"><div class="k">AI 生成</div><div class="v">$ai_count</div></div>
+                <div class="stat"><div class="k">疑似 AI</div><div class="v">$suspect_count</div></div>
+                <div class="stat"><div class="k">真实图片</div><div class="v">$real_count</div></div>
+                <div class="stat"><div class="k">失败数量</div><div class="v">$error_count</div></div>
+                <div class="stat"><div class="k">平均 AI 置信度</div><div class="v">$avg_conf</div></div>
+                <div class="stat"><div class="k">总耗时</div><div class="v">$elapsed</div></div>
+            </div>
+            <div class="bar">
+                <div class="ai"></div>
+                <div class="suspect"></div>
+                <div class="real"></div>
+            </div>
+            <div class="legend">
+                <span><i class="dot" style="background:var(--ai)"></i>AI $ai_pct%</span>
+                <span><i class="dot" style="background:var(--suspect)"></i>疑似 $suspect_pct%</span>
+                <span><i class="dot" style="background:var(--real)"></i>真实 $real_pct%</span>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>AI 生成图片</h2>
+            <div class="sub">仅展示 AI 生成样本，点击可打开原图。</div>
+            <div class="gallery">
+$ai_cards_html
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>疑似 AI 图片</h2>
+            <div class="sub">仅展示疑似样本，点击可打开原图。</div>
+            <div class="gallery">
+$suspect_cards_html
+            </div>
+        </section>
+    </main>
+</body>
+</html>

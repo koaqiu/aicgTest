@@ -1,0 +1,15 @@
+# Python 3.11 stable ranges
+# openvino 2026.x requires numpy < 2.5.0
+numpy>=1.26.4,<2.5.0
+opencv-python>=4.10.0,<4.14.0
+Pillow>=11.0.0,<13.0.0
+
+# Keep torch/torchvision in a matched pair
+torch>=2.12.0,<2.13.0
+torchvision>=0.27.0,<0.28.0
+
+# OpenVINO runtime (2026.x)
+openvino>=2026.0.0,<2027.0.0
+
+# ONNX export/load chain
+onnx>=1.20.0,<1.22.0

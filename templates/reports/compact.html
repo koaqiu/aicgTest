@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI 检测简报</title>
+    <style>
+        :root {
+            --bg: #f0f3f7;
+            --panel: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --line: #d9e1ea;
+            --ai: #c2410c;
+            --suspect: #b45309;
+            --real: #15803d;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            background: linear-gradient(180deg, #f9fbfd 0%, #eef3f8 100%);
+            color: var(--text);
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+        }
+        .wrap { max-width: 980px; margin: 20px auto; padding: 0 14px; }
+        .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+        h1, h2 { margin: 0 0 8px; }
+        .sub { color: var(--muted); font-size: 13px; }
+        .stats { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .chip { border: 1px solid var(--line); border-radius: 999px; padding: 6px 10px; font-size: 13px; background: #fff; }
+        .chip.ai { border-color: #f5d0c5; color: var(--ai); }
+        .chip.suspect { border-color: #f8e7c2; color: var(--suspect); }
+        .chip.real { border-color: #cdebd9; color: var(--real); }
+        .bar { margin-top: 10px; height: 10px; display: flex; overflow: hidden; border-radius: 999px; border: 1px solid var(--line); }
+        .bar > div { height: 100%; }
+        .bar .ai { width: $ai_pct%; background: var(--ai); }
+        .bar .suspect { width: $suspect_pct%; background: var(--suspect); }
+        .bar .real { width: $real_pct%; background: var(--real); }
+        .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+        .card { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }
+        .card img { width: 100%; height: 150px; object-fit: cover; display: block; }
+        .meta { padding: 8px; }
+        .name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .tag { font-size: 12px; margin-top: 4px; color: var(--muted); }
+        .empty { color: var(--muted); font-size: 13px; }
+    </style>
+</head>
+<body>
+    <main class="wrap">
+        <section class="panel">
+            <h1>AI 检测简报</h1>
+            <div class="sub">目录: $target_dir</div>
+            <div class="sub">时间: $generated_at</div>
+            <div class="stats">
+                <span class="chip">总文件 $total</span>
+                <span class="chip ai">AI $ai_count</span>
+                <span class="chip suspect">疑似 $suspect_count</span>
+                <span class="chip real">真实 $real_count</span>
+                <span class="chip">失败 $error_count</span>
+                <span class="chip">平均置信度 $avg_conf</span>
+                <span class="chip">耗时 $elapsed</span>
+            </div>
+            <div class="bar">
+                <div class="ai"></div>
+                <div class="suspect"></div>
+                <div class="real"></div>
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>AI 生成</h2>
+            <div class="gallery">
+$ai_cards_html
+            </div>
+        </section>
+
+        <section class="panel">
+            <h2>疑似 AI</h2>
+            <div class="gallery">
+$suspect_cards_html
+            </div>
+        </section>
+    </main>
+</body>
+</html>
