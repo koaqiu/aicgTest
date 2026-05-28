@@ -139,6 +139,16 @@ class AIDetector:
             and ela_value >= 4.2
             and signals.artifact_entropy >= 7.6
         )
+        stylized_render_ai = (
+            signals.artifact_confidence >= 0.50
+            and 55.0 <= signals.artifact_grad95 <= 95.0
+            and signals.artifact_min_corr >= 0.965
+            and 5.65 <= signals.artifact_entropy <= 6.15
+            and signals.artifact_sat <= 0.02
+            and signals.artifact_blockiness <= 6.8
+            and 1.0 <= ela_value <= 1.45
+            and signals.dire_confidence <= 0.05
+        )
         upscale_old_video_ai = (
             signals.artifact_confidence >= 0.52
             and signals.artifact_grad95 >= 240.0
@@ -219,6 +229,10 @@ class AIDetector:
         if strong_artifact_ai:
             score = max(score, 0.62)
 
+        # 风格化 3D 渲染（高通道相关+中低熵+中低梯度）在低熵抑制下容易漏报。
+        if stylized_render_ai:
+            score = max(score, 0.62)
+
         # 自然截图分布保护：避免被“平滑+高熵”误抬成 AI。
         if (
             not signals.meta_hit
@@ -260,6 +274,10 @@ class AIDetector:
 
         # 高伪影样本在惩罚后保留最低 AI 分数，避免被过度压制。
         if strong_artifact_ai:
+            score = max(score, 0.62)
+
+        # 风格化渲染样本在低熵抑制后保留最低 AI 分数。
+        if stylized_render_ai:
             score = max(score, 0.62)
 
         # 老视频源高清化命中后，避免被保护项或图形抑制完全压回真实。
@@ -436,6 +454,18 @@ class AIDetector:
             and 0.45 <= signals.dire_confidence <= 0.62
         ):
             tags.append("老视频源高清化特征")
+
+        if (
+            signals.artifact_confidence >= 0.50
+            and 55.0 <= signals.artifact_grad95 <= 95.0
+            and signals.artifact_min_corr >= 0.965
+            and 5.65 <= signals.artifact_entropy <= 6.15
+            and signals.artifact_sat <= 0.02
+            and signals.artifact_blockiness <= 6.8
+            and 1.0 <= ela_value <= 1.45
+            and signals.dire_confidence <= 0.05
+        ):
+            tags.append("风格化3D渲染特征")
 
         if 0.50 <= ai_confidence < THRESHOLD_FINAL:
             tags.append("建议复检")
