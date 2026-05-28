@@ -50,7 +50,7 @@ def _route(path: str) -> str:
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-MAX_UPLOAD_BYTES = int(os.getenv("WEB_MAX_UPLOAD_BYTES", str(20 * 1024 * 1024)))
+MAX_UPLOAD_BYTES = int(os.getenv("WEB_MAX_UPLOAD_BYTES", str(10 * 1024 * 1024)))
 CACHE_TTL_SECONDS = int(os.getenv("WEB_CACHE_TTL_SECONDS", str(1800)))
 TASK_RETENTION_SECONDS = int(os.getenv("WEB_TASK_RETENTION_SECONDS", str(3600)))
 SHUTDOWN_GRACE_SECONDS = int(os.getenv("WEB_SHUTDOWN_GRACE_SECONDS", str(20)))
@@ -595,6 +595,7 @@ def public_config():
         "turnstile_enabled": bool(TURNSTILE_ENABLED),
         "turnstile_site_key": TURNSTILE_SITE_KEY if TURNSTILE_ENABLED else "",
         "turnstile_mode": TURNSTILE_MODE,
+        "max_upload_bytes": MAX_UPLOAD_BYTES,
         "base_path": WEB_BASE_PATH,
         "api_base": _route("/api"),
         "static_base": _route("/static"),

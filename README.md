@@ -147,7 +147,7 @@ python main.py web --port 8000
 - `WEB_RELOAD`：是否自动重载（开发环境）
 - `WEB_BASE_PATH`：部署基础路径前缀（默认空，即根路径）。示例：`/ai-detector`
 - `WEB_REDIS_URL`：Redis 地址（默认 `redis://127.0.0.1:6379/0`）
-- `WEB_MAX_UPLOAD_BYTES`：上传大小上限（默认 20MB）
+- `WEB_MAX_UPLOAD_BYTES`：上传大小上限（默认 10MB）
 - `WEB_CACHE_TTL_SECONDS`：结果缓存 TTL（默认 1800 秒）
 - `WEB_TASK_RETENTION_SECONDS`：内存任务保留时长（默认 3600 秒）
 - `WEB_SHUTDOWN_GRACE_SECONDS`：优雅退出等待时长（默认 20 秒）
