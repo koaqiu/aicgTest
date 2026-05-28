@@ -267,6 +267,11 @@ Web 服务在停止时会执行：
 
 本项目使用 MIT License，详见 `LICENSE` 文件。
 
+## 开源说明
+
+- 本项目为开源项目，任何人均可在遵守许可证条款的前提下使用、修改和分发。
+- 代码库地址：https://github.com/koaqiu/aicgTest
+
 ## 部署附录（生产建议）
 
 本节提供可直接参考的 Nginx 与 Compose 模板，示例文件已放在：

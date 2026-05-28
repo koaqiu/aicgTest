@@ -42,6 +42,18 @@
         .meta { padding: 8px; }
         .name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .tag { font-size: 12px; margin-top: 4px; color: var(--muted); }
+        .open-source {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+        .open-source a {
+            color: #0f5e9c;
+            text-decoration: none;
+        }
+        .open-source a:hover {
+            text-decoration: underline;
+        }
         .empty { color: var(--muted); font-size: 13px; }
     </style>
 </head>
@@ -51,6 +63,7 @@
             <h1>AI 检测简报</h1>
             <div class="sub">目录: $target_dir</div>
             <div class="sub">时间: $generated_at</div>
+            <div class="open-source">开源说明：本项目基于 MIT License 开源，代码库：<a href="https://github.com/koaqiu/aicgTest" target="_blank" rel="noopener noreferrer">https://github.com/koaqiu/aicgTest</a></div>
             <div class="stats">
                 <span class="chip">总文件 $total</span>
                 <span class="chip ai">AI $ai_count</span>

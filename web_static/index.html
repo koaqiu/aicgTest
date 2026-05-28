@@ -37,6 +37,19 @@
             margin: 14px auto;
             padding: 0 12px 14px;
         }
+        .open-source-note {
+            margin-top: 10px;
+            color: #4f647a;
+            font-size: 12px;
+        }
+        .open-source-note a {
+            color: var(--brand);
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .open-source-note a:hover {
+            text-decoration: underline;
+        }
         .panel {
             border: 1px solid var(--line);
             border-radius: 18px;
@@ -326,6 +339,10 @@
                 <h1 id="title" class="title">AI 图片在线检测</h1>
                 <div id="subtitle" class="sub">匿名试用 · 上传后自动排队检测 · 重复文件秒级命中缓存</div>
                 <div id="disclaimer" class="disclaimer">免责声明：检测结果仅供参考，不保证准确性。复杂场景请务必人工复核。</div>
+                <div id="openSourceNote" class="open-source-note">
+                    开源说明：本项目基于 MIT License 开源，代码库：
+                    <a href="https://github.com/koaqiu/aicgTest" target="_blank" rel="noopener noreferrer">https://github.com/koaqiu/aicgTest</a>
+                </div>
             </div>
             <div class="tool-row">
                 <div class="lang-switch">
@@ -396,6 +413,7 @@
                 pageTitle: "AI 图片在线检测",
                 subtitle: "匿名试用 · 上传后自动排队检测 · 重复文件秒级命中缓存",
                 disclaimer: "免责声明：检测结果仅供参考，不保证准确性。复杂场景（压缩/转码/截图/局部嵌入）请务必人工复核。",
+                openSourceNote: "开源说明：本项目基于 MIT License 开源，代码库：",
                 toolbarRetry: "重新上传",
                 dropTitle: "拖拽图片到这里，或点击上传",
                 dropSub: "支持拖拽、点击或 Ctrl+V 粘贴图片。上传后会进入检测队列。若系统检测到高风险流量，将要求先完成验证码。",
@@ -446,6 +464,7 @@
                 pageTitle: "AI Image Detector",
                 subtitle: "Anonymous trial · Queued detection · Instant cache hit for duplicate uploads",
                 disclaimer: "Disclaimer: Detection results are for reference only and are not guaranteed to be accurate. In complex scenarios (compression/transcoding/screenshots/embedded content), always perform manual review.",
+                openSourceNote: "Open-source notice: This project is open-sourced under the MIT License. Repository:",
                 toolbarRetry: "Upload Again",
                 dropTitle: "Drag & Drop or Click to Upload an Image",
                 dropSub: "Drag, click, or paste (Ctrl+V) an image. Your image enters the queue after upload. If high-risk traffic is detected, captcha verification may be required.",
@@ -567,6 +586,11 @@
             document.getElementById("title").textContent = t("pageTitle");
             document.getElementById("subtitle").textContent = t("subtitle");
             document.getElementById("disclaimer").textContent = t("disclaimer");
+            const openSourceNoteEl = document.getElementById("openSourceNote");
+            const openSourceLinkEl = openSourceNoteEl ? openSourceNoteEl.querySelector("a") : null;
+            if (openSourceNoteEl && openSourceLinkEl) {
+                openSourceNoteEl.firstChild.textContent = `${t("openSourceNote")} `;
+            }
             document.getElementById("dropTitle").textContent = t("dropTitle");
             document.getElementById("dropSub").textContent = t("dropSub");
             uploadBtn.textContent = t("uploadBtn");

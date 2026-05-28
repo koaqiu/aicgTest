@@ -47,6 +47,18 @@
         .bar .real { background: var(--real); width: $real_pct%; }
         .legend { display: flex; gap: 14px; margin-top: 8px; color: var(--muted); font-size: 13px; flex-wrap: wrap; }
         .dot { width: 10px; height: 10px; display: inline-block; border-radius: 50%; margin-right: 6px; }
+        .open-source {
+            margin-top: 8px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+        .open-source a {
+            color: #0f5e9c;
+            text-decoration: none;
+        }
+        .open-source a:hover {
+            text-decoration: underline;
+        }
         .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
         .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
         .card img { width: 100%; height: 170px; object-fit: cover; display: block; background: #eee; }
@@ -67,6 +79,7 @@
             <div class="sub">目录: $target_dir</div>
             <div class="sub">生成时间: $generated_at</div>
             <div class="sub">免责声明：检测结果仅供参考，不保证准确性；复杂场景（压缩/转码/截图/局部嵌入）请人工复核。</div>
+            <div class="open-source">开源说明：本项目基于 MIT License 开源，代码库：<a href="https://github.com/koaqiu/aicgTest" target="_blank" rel="noopener noreferrer">https://github.com/koaqiu/aicgTest</a></div>
             <div class="stats">
                 <div class="stat"><div class="k">总文件数</div><div class="v">$total</div></div>
                 <div class="stat"><div class="k">AI 生成</div><div class="v">$ai_count</div></div>
