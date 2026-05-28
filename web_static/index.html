@@ -36,11 +36,13 @@
             max-width: 1380px;
             margin: 14px auto;
             padding: 0 12px 14px;
+            position: relative;
         }
         .open-source-note {
             margin-top: 10px;
             color: #4f647a;
             font-size: 12px;
+            line-height: 1.55;
         }
         .open-source-note a {
             color: var(--brand);
@@ -61,9 +63,13 @@
         .toolbar {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             gap: 12px;
             margin-bottom: 10px;
+        }
+        .toolbar-main {
+            flex: 1 1 auto;
+            min-width: 0;
         }
         .title {
             margin: 0;
@@ -86,17 +92,32 @@
             line-height: 1.5;
             max-width: 900px;
         }
-        .tool-row {
+        .page-meta {
+            margin-top: 10px;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: var(--paper);
+            box-shadow: 0 10px 22px rgba(17, 36, 58, 0.04);
+            padding: 10px 12px;
+        }
+        .floating-corner {
+            position: fixed;
+            right: 12px;
+            bottom: 12px;
+            z-index: 23;
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            align-items: flex-end;
             gap: 8px;
+            transition: opacity 0.2s ease, transform 0.2s ease;
         }
         .lang-switch {
             display: inline-flex;
             border: 1px solid #9fb9d2;
             border-radius: 12px;
             overflow: hidden;
-            background: #fff;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(2px);
         }
         .lang-btn {
             border: none;
@@ -118,6 +139,17 @@
             color: var(--brand);
             border: 1px solid #9fb9d2;
             font-weight: 600;
+        }
+        .top-btn {
+            min-width: 72px;
+            padding: 9px 12px;
+            border-radius: 999px;
+            border: 1px solid #9fb9d2;
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--brand);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 0.4px;
         }
         select, button {
             border: 1px solid var(--line);
@@ -150,6 +182,11 @@
             text-align: center;
             background: #f7f9fd;
             transition: all 0.2s ease;
+        }
+        .dropzone:focus { outline: none; }
+        .dropzone:focus-visible {
+            outline: 3px solid #79a7cf;
+            outline-offset: 3px;
         }
         .dropzone.dragover {
             border-color: #79a7cf;
@@ -235,19 +272,13 @@
             border: 1px solid #b4e5c6;
             border-radius: 14px;
             background: #dff5e8;
-            padding: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-            font-size: 17px;
-        }
-        .summary-pill {
-            border-radius: 999px;
-            padding: 8px 14px;
-            font-size: 20px;
+            padding: 14px 16px;
+            font-size: 18px;
             font-weight: 700;
+            line-height: 1.35;
             white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         .status-badge {
             display: inline-block;
@@ -258,11 +289,23 @@
             color: #34516d;
             border: 1px solid #c2d4e8;
             width: fit-content;
+            flex-shrink: 0;
+        }
+        .status-line {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
         }
         .task-id {
             color: #6c8298;
             font-size: 12px;
-            overflow-wrap: anywhere;
+            font-family: Consolas, "Courier New", monospace;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1 1 auto;
+            min-width: 0;
         }
         .metrics {
             border: 1px solid var(--line);
@@ -322,6 +365,10 @@
         .text-sus { color: var(--sus-text); }
         .text-pending { color: var(--pending-text); }
 
+        .mobile-quick-actions {
+            display: none;
+        }
+
         @media (max-width: 1100px) {
             .result-grid { grid-template-columns: 1fr; }
             #previewImage, .image-wrap { height: clamp(240px, 44vh, 380px); }
@@ -330,32 +377,177 @@
             .btn-primary { font-size: 24px; }
             .metric { font-size: 18px; }
         }
+
+        @media (max-width: 760px) {
+            .container {
+                margin: 10px auto;
+                padding: 0 10px 12px;
+            }
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+            .toolbar-main {
+                width: 100%;
+            }
+            .title {
+                font-size: 22px;
+                line-height: 1.2;
+            }
+            .sub {
+                font-size: 13px;
+                line-height: 1.45;
+            }
+            .disclaimer {
+                max-width: none;
+                font-size: 12px;
+            }
+            .open-source-note {
+                line-height: 1.45;
+            }
+            .page-meta {
+                margin-top: 8px;
+                padding: 9px 10px;
+            }
+            .floating-corner {
+                right: 10px;
+                bottom: calc(10px + env(safe-area-inset-bottom));
+            }
+            .upload-view {
+                padding: 14px 10px 12px;
+            }
+            .dropzone {
+                min-height: 0;
+                padding: 20px 12px;
+                gap: 12px;
+                border-radius: 14px;
+            }
+            .upload-icon {
+                width: 56px;
+                height: 56px;
+                border-radius: 12px;
+                font-size: 28px;
+            }
+            .drop-title {
+                font-size: 18px;
+                line-height: 1.35;
+                max-width: 18ch;
+                margin-top: 0;
+            }
+            .drop-sub {
+                font-size: 14px;
+                line-height: 1.5;
+                max-width: 100%;
+            }
+            #uploadBtn {
+                width: 100%;
+                max-width: 220px;
+            }
+            .example-tags {
+                gap: 8px;
+            }
+            .tag {
+                font-size: 12px;
+                padding: 5px 12px;
+            }
+            .result-view {
+                padding: 12px;
+            }
+            .summary {
+                padding: 12px 14px;
+                font-size: 16px;
+            }
+            .metric {
+                font-size: 16px;
+                padding: 12px 0;
+            }
+            .btn-primary {
+                font-size: 20px;
+                padding: 14px;
+                border-radius: 12px;
+            }
+
+            .mobile-quick-actions {
+                position: fixed;
+                left: 10px;
+                right: 10px;
+                bottom: calc(10px + env(safe-area-inset-bottom));
+                z-index: 24;
+                display: none;
+            }
+            body.result-active .mobile-quick-actions {
+                display: block;
+            }
+            body.result-active .floating-corner {
+                   bottom: calc(98px + env(safe-area-inset-bottom));
+            }
+            body.result-active.near-bottom .floating-corner {
+                opacity: 0;
+                pointer-events: none;
+                transform: translateY(8px);
+            }
+            body.result-active #resultView {
+                padding-bottom: 86px;
+            }
+            body.result-active #retryBtn {
+                display: none;
+            }
+            body.result-active .page-meta {
+                margin-bottom: calc(92px + env(safe-area-inset-bottom));
+            }
+            .mobile-quick-actions .btn-secondary {
+                width: calc(100% - 30px);
+                margin: 0 15px;
+                border-radius: 12px;
+                padding: 12px 14px;
+                background: var(--brand);
+                border-color: var(--brand);
+                color: #fff;
+                box-shadow: 0 8px 24px rgba(20, 93, 135, 0.35);
+            }
+        }
+
+        @media (max-width: 420px) {
+            .title { font-size: 20px; }
+            .lang-switch {
+                width: 108px;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+            .lang-btn {
+                text-align: center;
+                padding: 7px 8px;
+                font-size: 12px;
+            }
+            .drop-title {
+                font-size: 17px;
+            }
+            .drop-sub {
+                font-size: 13px;
+            }
+            .image-wrap,
+            #previewImage {
+                height: clamp(220px, 42vh, 320px);
+            }
+        }
     </style>
 </head>
 <body>
     <main class="container">
         <div class="toolbar">
-            <div>
+            <div class="toolbar-main">
                 <h1 id="title" class="title">AI 图片在线检测</h1>
                 <div id="subtitle" class="sub">匿名试用 · 上传后自动排队检测 · 重复文件秒级命中缓存</div>
-                <div id="disclaimer" class="disclaimer">免责声明：检测结果仅供参考，不保证准确性。复杂场景请务必人工复核。</div>
-                <div id="openSourceNote" class="open-source-note">
-                    开源说明：本项目基于 MIT License 开源，代码库：
-                    <a href="https://github.com/koaqiu/aicgTest" target="_blank" rel="noopener noreferrer">https://github.com/koaqiu/aicgTest</a>
-                </div>
             </div>
-            <div class="tool-row">
-                <div class="lang-switch">
-                    <button id="langZh" class="lang-btn" type="button">中</button>
-                    <button id="langEn" class="lang-btn" type="button">EN</button>
-                </div>
-                <select id="device">
-                    <option value="auto" selected>Device: auto</option>
-                    <option value="gpu">Device: gpu</option>
-                    <option value="cpu">Device: cpu</option>
-                </select>
-                <button id="toolbarRetryBtn" class="btn-secondary hidden" type="button">重新上传</button>
+        </div>
+
+        <div class="floating-corner" aria-label="floating-language-and-top-controls">
+            <div class="lang-switch">
+                <button id="langZh" class="lang-btn" type="button">中</button>
+                <button id="langEn" class="lang-btn" type="button">EN</button>
             </div>
+            <button id="topBtn" class="top-btn" type="button">TOP</button>
         </div>
 
         <input id="file" type="file" accept="image/*" />
@@ -384,12 +576,13 @@
 
                 <div class="result-right">
                     <div id="summary" class="summary">
-                        <div id="summaryText">This image is likely real</div>
-                        <div id="summaryPill" class="summary-pill text-real">84% REAL</div>
+                        <div id="summaryText">等待检测结果</div>
                     </div>
 
-                    <div id="statusBadge" class="status-badge">等待上传</div>
-                    <div id="taskId" class="task-id"></div>
+                    <div class="status-line">
+                        <div id="statusBadge" class="status-badge">等待上传</div>
+                        <div id="taskId" class="task-id"></div>
+                    </div>
 
                     <div class="metrics">
                         <div class="metric"><span id="metricAiLabel">AI Likelihood</span><span id="aiLikelihood" class="value text-real">0%</span></div>
@@ -404,6 +597,18 @@
             </div>
 
             <pre id="output" class="log">{\n  "message": "ready"\n}</pre>
+        </section>
+
+        <div class="mobile-quick-actions" aria-live="polite">
+            <button id="mobileRetryBtn" class="btn-secondary" type="button">重新上传</button>
+        </div>
+
+        <section class="page-meta" aria-label="legal-and-open-source-notes">
+            <div id="disclaimer" class="disclaimer">免责声明：检测结果仅供参考，不保证准确性。复杂场景请务必人工复核。</div>
+            <div id="openSourceNote" class="open-source-note">
+                开源说明：本项目基于 MIT License 开源，代码库：
+                <a href="https://github.com/koaqiu/aicgTest" target="_blank" rel="noopener noreferrer">https://github.com/koaqiu/aicgTest</a>
+            </div>
         </section>
     </main>
 
@@ -449,14 +654,10 @@
                 confLow: "低",
                 confMedium: "中",
                 confHigh: "高",
-                summaryReal: "这张图片更可能是真实拍摄",
-                summaryAi: "这张图片更可能是 AI 生成",
-                summarySus: "这张图片疑似 AI 生成",
-                summaryPending: "正在分析这张图片...",
-                summaryRealPill: "{p}% 真实",
-                summaryAiPill: "{p}% AI",
-                summarySusPill: "{p}% 疑似",
-                summaryPendingPill: "检测中",
+                summaryRealLine: "这张图片更可能是真实拍摄 · {p}% 真实",
+                summaryAiLine: "这张图片更可能是 AI 生成 · {p}% AI",
+                summarySusLine: "这张图片疑似 AI 生成 · {p}% 疑似",
+                summaryPendingLine: "正在分析这张图片...",
                 classPending: "待定",
                 detecting: "正在检测..."
             },
@@ -500,14 +701,10 @@
                 confLow: "Low",
                 confMedium: "Medium",
                 confHigh: "High",
-                summaryReal: "This image is likely real",
-                summaryAi: "This image is likely AI-generated",
-                summarySus: "This image may be AI-generated",
-                summaryPending: "Analyzing this image...",
-                summaryRealPill: "{p}% REAL",
-                summaryAiPill: "{p}% AI",
-                summarySusPill: "{p}% SUSPECT",
-                summaryPendingPill: "ANALYZING",
+                summaryRealLine: "This image is likely real · {p}% REAL",
+                summaryAiLine: "This image is likely AI-generated · {p}% AI",
+                summarySusLine: "This image may be AI-generated · {p}% SUSPECT",
+                summaryPendingLine: "Analyzing this image...",
                 classPending: "Pending",
                 detecting: "Detecting..."
             }
@@ -520,14 +717,13 @@
         const uploadView = document.getElementById("uploadView");
         const resultView = document.getElementById("resultView");
         const previewImage = document.getElementById("previewImage");
-        const toolbarRetryBtn = document.getElementById("toolbarRetryBtn");
-        const deviceEl = document.getElementById("device");
+        const mobileRetryBtn = document.getElementById("mobileRetryBtn");
+        const topBtn = document.getElementById("topBtn");
         const outputEl = document.getElementById("output");
         const taskIdEl = document.getElementById("taskId");
         const statusBadgeEl = document.getElementById("statusBadge");
         const summaryEl = document.getElementById("summary");
         const summaryTextEl = document.getElementById("summaryText");
-        const summaryPillEl = document.getElementById("summaryPill");
         const aiLikelihoodEl = document.getElementById("aiLikelihood");
         const confidenceLevelEl = document.getElementById("confidenceLevel");
         const classificationEl = document.getElementById("classification");
@@ -595,7 +791,9 @@
             document.getElementById("dropSub").textContent = t("dropSub");
             uploadBtn.textContent = t("uploadBtn");
             retryBtn.textContent = t("retryBtn");
-            toolbarRetryBtn.textContent = t("toolbarRetry");
+            if (mobileRetryBtn) {
+                mobileRetryBtn.textContent = t("toolbarRetry");
+            }
             document.getElementById("metricAiLabel").textContent = t("metricAiLabel");
             document.getElementById("metricConfLabel").textContent = t("metricConfLabel");
             document.getElementById("metricClsLabel").textContent = t("metricClsLabel");
@@ -618,6 +816,25 @@
 
         function setOutput(data) {
             outputEl.textContent = JSON.stringify(data, null, 2);
+        }
+
+        function updateBottomDockState() {
+            const doc = document.documentElement;
+            const remain = doc.scrollHeight - (window.scrollY + window.innerHeight);
+            document.body.classList.toggle("near-bottom", remain <= 140);
+        }
+
+        function setTaskId(taskId) {
+            if (!taskId) {
+                taskIdEl.textContent = "";
+                taskIdEl.removeAttribute("title");
+                return;
+            }
+
+            const raw = String(taskId);
+            const compact = raw.length > 26 ? `${raw.slice(0, 12)}...${raw.slice(-10)}` : raw;
+            taskIdEl.textContent = `id: ${compact}`;
+            taskIdEl.title = `id: ${raw}`;
         }
 
         function setStatus(text, isError = false) {
@@ -663,27 +880,21 @@
             if (cls === "real") {
                 summaryEl.style.background = "var(--real-bg)";
                 summaryEl.style.borderColor = "#b7e6c8";
-                summaryTextEl.textContent = t("summaryReal");
-                summaryPillEl.textContent = t("summaryRealPill").replace("{p}", String(realPct));
-                summaryPillEl.className = "summary-pill text-real";
+                summaryTextEl.textContent = t("summaryRealLine").replace("{p}", String(realPct));
                 classificationEl.textContent = t("classReal");
                 classificationEl.className = "value text-real";
                 aiLikelihoodEl.className = "value text-real";
             } else if (cls === "suspect") {
                 summaryEl.style.background = "var(--sus-bg)";
                 summaryEl.style.borderColor = "#f4d8a6";
-                summaryTextEl.textContent = t("summarySus");
-                summaryPillEl.textContent = t("summarySusPill").replace("{p}", String(aiPct));
-                summaryPillEl.className = "summary-pill text-sus";
+                summaryTextEl.textContent = t("summarySusLine").replace("{p}", String(aiPct));
                 classificationEl.textContent = t("classSuspect");
                 classificationEl.className = "value text-sus";
                 aiLikelihoodEl.className = "value text-sus";
             } else {
                 summaryEl.style.background = "var(--ai-bg)";
                 summaryEl.style.borderColor = "#f8cec8";
-                summaryTextEl.textContent = t("summaryAi");
-                summaryPillEl.textContent = t("summaryAiPill").replace("{p}", String(aiPct));
-                summaryPillEl.className = "summary-pill text-ai";
+                summaryTextEl.textContent = t("summaryAiLine").replace("{p}", String(aiPct));
                 classificationEl.textContent = t("classAi");
                 classificationEl.className = "value text-ai";
                 aiLikelihoodEl.className = "value text-ai";
@@ -694,9 +905,7 @@
             currentViewState = "pending";
             summaryEl.style.background = "var(--pending-bg)";
             summaryEl.style.borderColor = "#cad8e8";
-            summaryTextEl.textContent = t("summaryPending");
-            summaryPillEl.textContent = t("summaryPendingPill");
-            summaryPillEl.className = "summary-pill text-pending";
+            summaryTextEl.textContent = t("summaryPendingLine");
             aiLikelihoodEl.textContent = "--";
             aiLikelihoodEl.className = "value text-pending";
             confidenceLevelEl.textContent = "--";
@@ -709,25 +918,25 @@
         function showUploadView() {
             uploadView.classList.remove("hidden");
             resultView.classList.add("hidden");
-            toolbarRetryBtn.classList.add("hidden");
+            document.body.classList.remove("result-active");
             currentViewState = "idle";
             lastResult = null;
             setStatus(t("waitingUpload"), false);
-            taskIdEl.textContent = "";
+            setTaskId("");
             setOutput({ message: "ready" });
             currentFile = null;
             fileInput.value = "";
-            uploadView.focus();
+            updateBottomDockState();
         }
 
         function showResultView(file) {
             uploadView.classList.add("hidden");
             resultView.classList.remove("hidden");
-            toolbarRetryBtn.classList.remove("hidden");
+            document.body.classList.add("result-active");
             previewImage.src = URL.createObjectURL(file);
             applyPendingVisual();
             setStatus(t("detecting"));
-            resultView.focus();
+            updateBottomDockState();
         }
 
         function loadScript(src) {
@@ -855,14 +1064,14 @@
 
                 const form = new FormData();
                 form.append("file", currentFile);
-                form.append("device", deviceEl.value.replace("Device: ", ""));
+                form.append("device", "auto");
                 if (turnstileEnabled && turnstileToken) {
                     form.append("captcha_token", turnstileToken);
                 }
 
                 const r = await fetch(withBase("/api/tasks"), { method: "POST", body: form });
                 const data = await r.json().catch(() => ({ detail: "invalid_json" }));
-                taskIdEl.textContent = data.task_id ? `task_id: ${data.task_id}` : "";
+                setTaskId(data.task_id || "");
 
                 if (!r.ok) {
                     if (r.status === 428 && turnstileEnabled) {
@@ -1011,7 +1220,13 @@
         }
 
         retryBtn.addEventListener("click", resetToUpload);
-        toolbarRetryBtn.addEventListener("click", resetToUpload);
+        mobileRetryBtn.addEventListener("click", resetToUpload);
+        topBtn.addEventListener("click", () => {
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+
+        window.addEventListener("scroll", updateBottomDockState, { passive: true });
+        window.addEventListener("resize", updateBottomDockState);
 
         langZhBtn.addEventListener("click", () => {
             lang = "zh";
@@ -1025,6 +1240,7 @@
         refreshLanguageUI();
         initCaptchaConfig();
         showUploadView();
+        updateBottomDockState();
     </script>
 </body>
 </html>
