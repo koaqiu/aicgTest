@@ -15,6 +15,7 @@ def _render_cards(items: list[dict]) -> str:
     for item in items:
         file_uri = item["path"].as_uri()
         tags_text = ", ".join(item.get("tags", [])) or "无"
+        content_label = item.get("content_label", "未见明显AI内容")
         cards.append(
             "\n".join(
                 [
@@ -26,6 +27,7 @@ def _render_cards(items: list[dict]) -> str:
                     f'    <div class="name" title="{escape(item["name"])}">{escape(item["name"])} </div>',
                     f'    <div class="tag {escape(item["bucket"])}">{escape(item["label"])} </div>',
                     f'    <div class="conf">AI置信度: {item["confidence"] * 100:.2f}%</div>',
+                    f'    <div class="conf">内容判定: {escape(content_label)}</div>',
                     f'    <div class="tags">标签: {escape(tags_text)}</div>',
                     "  </div>",
                     "</article>",
@@ -84,6 +86,8 @@ def generate_html_report(target_dir: Path, summary: dict, elapsed: float, templa
     flagged = sorted(summary["flagged"], key=lambda x: x["confidence"], reverse=True)
     ai_items = [x for x in flagged if x["bucket"] == "ai"]
     suspect_items = [x for x in flagged if x["bucket"] == "suspect"]
+    content_items = list(summary.get("content_hits", []))
+    embedded_items = list(summary.get("embedded", []))
 
     resolved_template = _resolve_template_path(template)
     if not resolved_template.exists():
@@ -97,6 +101,8 @@ def generate_html_report(target_dir: Path, summary: dict, elapsed: float, templa
         ai_count=ai_count,
         suspect_count=suspect_count,
         real_count=real_count,
+        embedded_count=len(content_items),
+        embedded_real_count=len(embedded_items),
         error_count=error_count,
         avg_conf=f"{avg_conf * 100:.2f}%",
         elapsed=f"{elapsed:.2f}s",
@@ -105,6 +111,7 @@ def generate_html_report(target_dir: Path, summary: dict, elapsed: float, templa
         real_pct=f"{real_pct:.2f}",
         ai_cards_html=_render_cards(ai_items),
         suspect_cards_html=_render_cards(suspect_items),
+        embedded_cards_html=_render_cards(embedded_items),
     )
 
     report_path.write_text(html, encoding="utf-8")

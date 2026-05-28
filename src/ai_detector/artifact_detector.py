@@ -88,6 +88,28 @@ def detect_artifact_signature(img_path: str) -> tuple[bool, float, str]:
 
     ela_mean = _ela_mean(img_path)
 
+    # 估计 JPEG/视频重编码后的块效应强度。值越高，说明 8x8 边界越明显。
+    gray_f = gray.astype(np.float32)
+    h, w = gray_f.shape[:2]
+    if h >= 16 and w >= 16:
+        v_boundaries = gray_f[:, 8::8]
+        v_inner = gray_f[:, 4::8]
+        h_boundaries = gray_f[8::8, :]
+        h_inner = gray_f[4::8, :]
+        if v_boundaries.size and v_inner.size:
+            cols = min(v_boundaries.shape[1], v_inner.shape[1])
+            blockiness_v = float(np.mean(np.abs(v_boundaries[:, :cols] - v_inner[:, :cols])))
+        else:
+            blockiness_v = 0.0
+        if h_boundaries.size and h_inner.size:
+            rows = min(h_boundaries.shape[0], h_inner.shape[0])
+            blockiness_h = float(np.mean(np.abs(h_boundaries[:rows, :] - h_inner[:rows, :])))
+        else:
+            blockiness_h = 0.0
+        blockiness = (blockiness_v + blockiness_h) / 2.0
+    else:
+        blockiness = 0.0
+
     hist = cv2.calcHist([gray], [0], None, [256], [0, 256]).ravel()
     prob = hist / max(float(hist.sum()), 1.0)
     entropy = float(-(prob[prob > 0] * np.log2(prob[prob > 0])).sum())
@@ -99,14 +121,16 @@ def detect_artifact_signature(img_path: str) -> tuple[bool, float, str]:
     ela_low = _sigmoid((ela_mean - 0.35) / 0.2)
     ela_high = _sigmoid((2.0 - ela_mean) / 0.3)
     ela_band_conf = ela_low * ela_high
+    blockiness_conf = _sigmoid((blockiness - 14.0) / 4.5)
     sat_penalty = _sigmoid((saturation_ratio - 0.35) / 0.08)
 
     confidence = (
-        0.30 * smooth_conf
-        + 0.20 * corr_conf
-        + 0.25 * entropy_conf
-        + 0.15 * ela_band_conf
-        + 0.10 * (1.0 - sat_penalty)
+        0.26 * smooth_conf
+        + 0.18 * corr_conf
+        + 0.22 * entropy_conf
+        + 0.14 * ela_band_conf
+        + 0.12 * blockiness_conf
+        + 0.08 * (1.0 - sat_penalty)
     )
     if not np.isfinite(confidence):
         confidence = 0.0
@@ -114,6 +138,6 @@ def detect_artifact_signature(img_path: str) -> tuple[bool, float, str]:
 
     reason = (
         f"grad95={grad_p95:.2f}, minCorr={min_corr:.3f}, ELA={ela_mean:.2f}, "
-        f"entropy={entropy:.3f}, sat={saturation_ratio:.3f}"
+        f"entropy={entropy:.3f}, sat={saturation_ratio:.3f}, blockiness={blockiness:.2f}"
     )
     return confidence >= 0.6, confidence, reason

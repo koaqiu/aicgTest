@@ -499,6 +499,7 @@ async def _worker_loop() -> None:
             state.cached = False
             state.result = {
                 "label": details["result"],
+                "content_label": details.get("content_result", "未见明显AI内容"),
                 "confidence": details["confidence"],
                 "tags": details.get("tags", []),
             }

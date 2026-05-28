@@ -22,6 +22,12 @@ warnings.filterwarnings(
 )
 
 
+DISCLAIMER_TEXT = (
+    "免责声明：检测结果仅供参考，不保证准确性。"
+    "复杂场景（压缩/转码/截图/局部嵌入）请务必人工复核。"
+)
+
+
 def _collect_images(target_dir: Path) -> list[Path]:
     image_extensions = [".jpg", ".jpeg", ".png", ".bmp", ".webp"]
     image_files = []
@@ -96,6 +102,8 @@ def _print_report(summary: dict, elapsed: float):
     print(f"AI生成: {summary['ai']}")
     print(f"疑似AI: {summary['suspect']}")
     print(f"真实图片: {summary['real']}")
+    print(f"疑似包含AI内容: {len(summary['content_hits'])}")
+    print(f"其中真图嵌入AI内容: {len(summary['embedded'])}")
     print(f"失败数量: {len(errors)}")
     print(f"平均AI置信度: {avg_conf * 100:.2f}%")
     print(f"总耗时: {elapsed:.2f}s")
@@ -111,6 +119,7 @@ def _print_report(summary: dict, elapsed: float):
             print(f"- {name}: {reason}")
 
     print("=" * 60)
+    print(DISCLAIMER_TEXT)
 
 
 def main(argv: list[str] | None = None):
@@ -133,6 +142,7 @@ def main(argv: list[str] | None = None):
 
     args = parser.parse_args(argv)
     detector = AIDetector(device_mode=args.device)
+    print(DISCLAIMER_TEXT)
 
     try:
         if args.directory:
@@ -159,6 +169,8 @@ def main(argv: list[str] | None = None):
                 "ai": 0,
                 "suspect": 0,
                 "real": 0,
+                "content_hits": [],
+                "embedded": [],
                 "errors": [],
                 "confidences": [],
                 "top_ai": [],
@@ -166,6 +178,7 @@ def main(argv: list[str] | None = None):
             }
 
             for idx, img_path in enumerate(image_files, start=1):
+                content_result = "未见明显AI内容"
                 try:
                     details = detector.detect_detailed(str(img_path), verbose=False)
                     result = details["result"]
@@ -174,6 +187,7 @@ def main(argv: list[str] | None = None):
                     bucket = _label_to_bucket(result)
                     summary[bucket] += 1
                     summary["processed"] += 1
+                    content_result = details.get("content_result", content_result)
                     if isinstance(confidence, (int, float)) and math.isfinite(confidence):
                         summary["confidences"].append(float(confidence))
                     if bucket == "ai":
@@ -189,6 +203,31 @@ def main(argv: list[str] | None = None):
                                 "tags": tags,
                             }
                         )
+                        summary["flagged"][-1]["content_label"] = content_result
+                    if content_result != "未见明显AI内容":
+                        summary["content_hits"].append(
+                            {
+                                "name": img_path.name,
+                                "path": img_path.resolve(),
+                                "confidence": float(confidence),
+                                "bucket": bucket,
+                                "label": result,
+                                "tags": tags,
+                                "content_label": content_result,
+                            }
+                        )
+                    if bucket == "real" and content_result != "未见明显AI内容":
+                        summary["embedded"].append(
+                            {
+                                "name": img_path.name,
+                                "path": img_path.resolve(),
+                                "confidence": float(confidence),
+                                "bucket": bucket,
+                                "label": content_result,
+                                "tags": tags,
+                                "content_label": content_result,
+                            }
+                        )
 
                     status = (
                         f"{_render_progress(idx, len(image_files))} | "
@@ -198,6 +237,8 @@ def main(argv: list[str] | None = None):
                     tag_text = _short_tags(tags)
                     if tag_text:
                         status += f" | 标签: {tag_text}"
+                    if content_result != "未见明显AI内容":
+                        status += f" | 内容: {content_result}"
                     sys.stdout.write("\r" + status.ljust(140))
                     sys.stdout.flush()
                 except Exception as e:

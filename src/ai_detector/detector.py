@@ -27,6 +27,7 @@ class DetectionSignals:
     artifact_min_corr: float
     artifact_entropy: float
     artifact_sat: float
+    artifact_blockiness: float
     graphic_penalty: float
 
 
@@ -74,6 +75,7 @@ class AIDetector:
         ai_confidence = self._fuse_confidence(signals)
         final_result = self._decide_label(ai_confidence)
         tags = self._derive_tags(signals, ai_confidence)
+        content_result = self._decide_content_label(signals, ai_confidence, tags)
 
         if verbose:
             print(f"频域特征值：{freq_score}（值越高越可疑）")
@@ -81,12 +83,14 @@ class AIDetector:
             print(f"元数据证据：{'命中' if signals.meta_hit else '未命中'}（{signals.meta_reason}）")
             print(f"单图取证证据：{'命中' if signals.artifact_hit else '未命中'}（{signals.artifact_reason}）")
             print(f"解释标签：{', '.join(tags) if tags else '无'}")
+            print(f"内容判定：{content_result}")
             print(f"AI置信度：{ai_confidence * 100}%")
             print(f"最终判定：{final_result}")
             print("=" * 50 + "\n")
 
         return {
             "result": final_result,
+            "content_result": content_result,
             "confidence": ai_confidence,
             "tags": tags,
             "signals": signals,
@@ -121,6 +125,7 @@ class AIDetector:
             artifact_min_corr=AIDetector._extract_metric(artifact_reason, "minCorr", 0.0),
             artifact_entropy=AIDetector._extract_metric(artifact_reason, "entropy", 0.0),
             artifact_sat=AIDetector._extract_metric(artifact_reason, "sat", 0.0),
+            artifact_blockiness=AIDetector._extract_metric(artifact_reason, "blockiness", 0.0),
             graphic_penalty=AIDetector._calc_graphic_penalty(artifact_reason),
         )
 
@@ -169,6 +174,31 @@ class AIDetector:
             and signals.dire_confidence <= 0.18
         ):
             score = max(score, 0.64)
+
+        # AI 内容经过网页/视频二次展示再截图时，常会叠加块效应与重编码痕迹。
+        if (
+            signals.artifact_blockiness >= 14.0
+            and signals.artifact_min_corr >= 0.95
+            and ela_value <= 1.55
+            and signals.artifact_entropy >= 6.2
+            and signals.artifact_confidence >= 0.42
+        ):
+            score = max(score, 0.60)
+
+        # 更常见的“页面/视频里看过一遍再截屏”的样本，原始痕迹会被洗弱，但仍会保留：
+        # - 中等块效应
+        # - 高频纹理不低
+        # - 通道相关偏高
+        # - DIRE 重建支持偏弱
+        if (
+            8.8 <= signals.artifact_blockiness <= 13.5
+            and signals.artifact_grad95 >= 125.0
+            and signals.artifact_min_corr >= 0.83
+            and signals.artifact_entropy >= 7.45
+            and signals.dire_confidence <= 0.16
+            and 0.36 <= signals.artifact_confidence <= 0.58
+        ):
+            score = max(score, 0.61)
 
         # 面部替换/编辑类截图常见于该组合：中低熵 + 中梯度 + 低通道相关 + 低重建支持。
         if (
@@ -246,6 +276,35 @@ class AIDetector:
         if ai_confidence >= max(THRESHOLD_FINAL - 0.15, 0.50):
             return "疑似AI生成图片（建议复检）"
         return "真实图片"
+
+    @staticmethod
+    def _decide_content_label(signals: DetectionSignals, ai_confidence: float, tags: list[str]) -> str:
+        """根据内容级特征判断图片是否包含 AI 生成内容。"""
+        content_tags = {
+            "高伪影编辑痕迹",
+            "换脸/编辑截图特征",
+            "二次展示/重编码痕迹",
+            "页面/视频截屏痕迹",
+            "老视频源高清化特征",
+            "纹理一致性异常",
+        }
+        indirect_tags = {
+            "换脸/编辑截图特征",
+            "二次展示/重编码痕迹",
+            "页面/视频截屏痕迹",
+            "老视频源高清化特征",
+        }
+        has_content_signal = bool(content_tags.intersection(tags)) or signals.artifact_hit or signals.meta_hit
+
+        if ai_confidence >= THRESHOLD_FINAL:
+            if indirect_tags.intersection(tags):
+                return "疑似包含AI内容"
+            return "包含AI内容"
+        if has_content_signal and ai_confidence >= 0.45:
+            return "疑似包含AI内容"
+        if has_content_signal and ai_confidence >= 0.30:
+            return "疑似包含AI内容"
+        return "未见明显AI内容"
 
     @staticmethod
     def _calc_fft_confidence(freq_score: float) -> float:
@@ -341,6 +400,23 @@ class AIDetector:
 
         if signals.graphic_penalty >= 0.20:
             tags.append("图形素材抑制")
+
+        if (
+            signals.artifact_blockiness >= 14.0
+            and signals.artifact_min_corr >= 0.95
+            and ela_value <= 1.55
+            and signals.artifact_entropy >= 6.2
+        ):
+            tags.append("二次展示/重编码痕迹")
+
+        if (
+            8.8 <= signals.artifact_blockiness <= 13.5
+            and signals.artifact_grad95 >= 125.0
+            and signals.artifact_min_corr >= 0.83
+            and signals.artifact_entropy >= 7.45
+            and signals.dire_confidence <= 0.16
+        ):
+            tags.append("页面/视频截屏痕迹")
 
         if (
             signals.artifact_min_corr >= 0.98

@@ -62,6 +62,17 @@
             font-size: 14px;
             margin-top: 3px;
         }
+        .disclaimer {
+            margin-top: 6px;
+            color: #7f4a0a;
+            background: #fff4dd;
+            border: 1px solid #f4d8a6;
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 12px;
+            line-height: 1.5;
+            max-width: 900px;
+        }
         .tool-row {
             display: flex;
             align-items: center;
@@ -246,6 +257,16 @@
             background: #f6f8fb;
             padding: 10px 14px;
         }
+        .result-note {
+            margin-top: 10px;
+            border: 1px solid #d8e4f0;
+            border-radius: 10px;
+            background: #f5f9fe;
+            color: #4b657f;
+            font-size: 12px;
+            line-height: 1.5;
+            padding: 8px 10px;
+        }
         .metric {
             display: flex;
             justify-content: space-between;
@@ -304,6 +325,7 @@
             <div>
                 <h1 id="title" class="title">AI 图片在线检测</h1>
                 <div id="subtitle" class="sub">匿名试用 · 上传后自动排队检测 · 重复文件秒级命中缓存</div>
+                <div id="disclaimer" class="disclaimer">免责声明：检测结果仅供参考，不保证准确性。复杂场景请务必人工复核。</div>
             </div>
             <div class="tool-row">
                 <div class="lang-switch">
@@ -356,7 +378,9 @@
                         <div class="metric"><span id="metricAiLabel">AI Likelihood</span><span id="aiLikelihood" class="value text-real">0%</span></div>
                         <div class="metric"><span id="metricConfLabel">Confidence</span><span id="confidenceLevel" class="value">Low</span></div>
                         <div class="metric"><span id="metricClsLabel">Classification</span><span id="classification" class="value text-real">Real</span></div>
+                        <div class="metric"><span id="metricContentLabel">内容判定</span><span id="contentVerdict" class="value text-real">--</span></div>
                     </div>
+                    <div id="resultNote" class="result-note">普通场景可作参考，复杂场景（压缩/转码/截图/局部嵌入）建议人工复核。</div>
 
                     <button id="retryBtn" class="btn-primary" type="button">Try Another Image</button>
                 </div>
@@ -371,6 +395,7 @@
             zh: {
                 pageTitle: "AI 图片在线检测",
                 subtitle: "匿名试用 · 上传后自动排队检测 · 重复文件秒级命中缓存",
+                disclaimer: "免责声明：检测结果仅供参考，不保证准确性。复杂场景（压缩/转码/截图/局部嵌入）请务必人工复核。",
                 toolbarRetry: "重新上传",
                 dropTitle: "拖拽图片到这里，或点击上传",
                 dropSub: "支持拖拽、点击或 Ctrl+V 粘贴图片。上传后会进入检测队列。若系统检测到高风险流量，将要求先完成验证码。",
@@ -398,6 +423,8 @@
                 metricAiLabel: "AI 可能性",
                 metricConfLabel: "可信度",
                 metricClsLabel: "分类",
+                metricContentLabel: "内容判定",
+                resultNote: "普通场景可作参考，复杂场景（压缩/转码/截图/局部嵌入）建议人工复核。",
                 classReal: "真实",
                 classAi: "AI",
                 classSuspect: "疑似",
@@ -418,6 +445,7 @@
             en: {
                 pageTitle: "AI Image Detector",
                 subtitle: "Anonymous trial · Queued detection · Instant cache hit for duplicate uploads",
+                disclaimer: "Disclaimer: Detection results are for reference only and are not guaranteed to be accurate. In complex scenarios (compression/transcoding/screenshots/embedded content), always perform manual review.",
                 toolbarRetry: "Upload Again",
                 dropTitle: "Drag & Drop or Click to Upload an Image",
                 dropSub: "Drag, click, or paste (Ctrl+V) an image. Your image enters the queue after upload. If high-risk traffic is detected, captcha verification may be required.",
@@ -445,6 +473,8 @@
                 metricAiLabel: "AI Likelihood",
                 metricConfLabel: "Confidence",
                 metricClsLabel: "Classification",
+                metricContentLabel: "Content Verdict",
+                resultNote: "Useful as a reference in ordinary cases; in complex scenarios (compression/transcoding/screenshots/embedded content), manual review is recommended.",
                 classReal: "Real",
                 classAi: "AI",
                 classSuspect: "Suspect",
@@ -482,6 +512,8 @@
         const aiLikelihoodEl = document.getElementById("aiLikelihood");
         const confidenceLevelEl = document.getElementById("confidenceLevel");
         const classificationEl = document.getElementById("classification");
+        const contentVerdictEl = document.getElementById("contentVerdict");
+        const resultNoteEl = document.getElementById("resultNote");
         const captchaWrap = document.getElementById("captchaWrap");
         const captchaEl = document.getElementById("captcha");
 
@@ -534,6 +566,7 @@
             document.title = t("pageTitle");
             document.getElementById("title").textContent = t("pageTitle");
             document.getElementById("subtitle").textContent = t("subtitle");
+            document.getElementById("disclaimer").textContent = t("disclaimer");
             document.getElementById("dropTitle").textContent = t("dropTitle");
             document.getElementById("dropSub").textContent = t("dropSub");
             uploadBtn.textContent = t("uploadBtn");
@@ -542,6 +575,8 @@
             document.getElementById("metricAiLabel").textContent = t("metricAiLabel");
             document.getElementById("metricConfLabel").textContent = t("metricConfLabel");
             document.getElementById("metricClsLabel").textContent = t("metricClsLabel");
+            document.getElementById("metricContentLabel").textContent = t("metricContentLabel");
+            resultNoteEl.textContent = t("resultNote");
 
             langZhBtn.classList.toggle("active", lang === "zh");
             langEnBtn.classList.toggle("active", lang === "en");
@@ -581,15 +616,25 @@
             return "real";
         }
 
+        function classifyContentLabel(rawLabel) {
+            const label = String(rawLabel || "");
+            if (label.includes("疑似")) return "suspect";
+            if (label.includes("包含AI")) return "ai";
+            return "real";
+        }
+
         function applyResultVisual(result) {
             currentViewState = "result";
             lastResult = result;
             const cls = classifyLabel(result.label);
+            const contentCls = classifyContentLabel(result.content_label);
             const aiPct = Math.max(0, Math.min(100, Math.round((result.confidence || 0) * 100)));
             const realPct = 100 - aiPct;
 
             aiLikelihoodEl.textContent = `${aiPct}%`;
             confidenceLevelEl.textContent = confidenceLevel(aiPct);
+            contentVerdictEl.textContent = result.content_label || "--";
+            contentVerdictEl.className = `value text-${contentCls}`;
 
             if (cls === "real") {
                 summaryEl.style.background = "var(--real-bg)";
@@ -633,6 +678,8 @@
             confidenceLevelEl.textContent = "--";
             classificationEl.textContent = t("classPending");
             classificationEl.className = "value text-pending";
+            contentVerdictEl.textContent = "--";
+            contentVerdictEl.className = "value text-pending";
         }
 
         function showUploadView() {
